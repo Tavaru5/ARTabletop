@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 26074b15f9c13404d858bfedb8b8c00c
+timeCreated: 1506178186
+licenseType: Free
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - m_firstPersonCamera: {instanceID: 0}
+  - m_trackedPlanePrefab: {instanceID: 0}
+  - m_andyAndroidPrefab: {fileID: 1841345107895484, guid: 0ec56395e92ed40d2a4c396203b602fb,
+      type: 2}
+  - m_searchingForPlaneUI: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
