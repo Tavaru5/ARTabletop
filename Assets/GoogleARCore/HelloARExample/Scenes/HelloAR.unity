@@ -254,9 +254,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sizeX: 10
   sizeZ: 10
-  characterPrefab: {fileID: 1190091649889860, guid: 242a320930b81430ba610f94f9b760c8,
+  characterPrefab: {fileID: 1397306232437084, guid: 6f7366fafc90142c793d989e81ee1d3f,
+    type: 2}
+  monsterPrefab: {fileID: 1705199868606716, guid: c81f1faf0498c4648b6fc3ee9062d594,
     type: 2}
   wallPrefab: {fileID: 1915249821232600, guid: cc1c48b23e17f4adcb979c1eb2e9d95c, type: 2}
+  testMat: {fileID: 2100000, guid: 32510bc1fdd4c4c55ba9ebf96ba7f574, type: 2}
   m_firstPersonCamera: {fileID: 989943870}
   m_trackedPlanePrefab: {fileID: 1654175882956584, guid: 6a35c744e5010405c847fad90282d2be,
     type: 2}
@@ -481,7 +484,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1608144853}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1148, y: 627, z: 0}
+  m_LocalPosition: {x: 1017, y: 627, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1133631541}
@@ -618,7 +621,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1764419355}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1068, y: 0, z: 0}
+  m_LocalPosition: {x: -937, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1133631541}

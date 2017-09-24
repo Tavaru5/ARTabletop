@@ -37,7 +37,9 @@ namespace GoogleARCore.HelloAR
 		public int sizeX, sizeZ;
 
         public GameObject characterPrefab;
+        public GameObject monsterPrefab;
         public GameObject wallPrefab;
+        public Material testMat;
 
 		private GameObject[,] cells;
         private bool setup = false;
@@ -82,21 +84,7 @@ namespace GoogleARCore.HelloAR
 		private GameObject andyObject;
 
         private Color[] m_planeColors = new Color[] {
-            new Color(1.0f, 1.0f, 1.0f),
-            new Color(0.956f, 0.262f, 0.211f),
-            new Color(0.913f, 0.117f, 0.388f),
-            new Color(0.611f, 0.152f, 0.654f),
-            new Color(0.403f, 0.227f, 0.717f),
-            new Color(0.247f, 0.317f, 0.709f),
-            new Color(0.129f, 0.588f, 0.952f),
-            new Color(0.011f, 0.662f, 0.956f),
-            new Color(0f, 0.737f, 0.831f),
-            new Color(0f, 0.588f, 0.533f),
-            new Color(0.298f, 0.686f, 0.313f),
-            new Color(0.545f, 0.764f, 0.290f),
-            new Color(0.803f, 0.862f, 0.223f),
-            new Color(1.0f, 0.921f, 0.231f),
-            new Color(1.0f, 0.756f, 0.027f)
+            new Color(0.0f, 0.0f, 0.0f)
         };
 
 		public void Start()
@@ -127,7 +115,8 @@ namespace GoogleARCore.HelloAR
                 //Determine where to initially place the character
                 Vector3 pos = cells[(int)x, (int)z].transform.position;
                 pos = pos + new Vector3 (0, 0.025f, 0);
-                GameObject char1 = Instantiate(characterPrefab, pos, Quaternion.Euler(0, 180f, 0));
+                GameObject char1;
+                char1 = Instantiate(characterPrefab, pos, Quaternion.Euler(0, 180f, 0));
 
                 //Set the variables for the character
                 char1.GetComponent<CharacterRunner>().characterId = data["characters"][i]["_id"];
@@ -347,25 +336,40 @@ namespace GoogleARCore.HelloAR
                 //There was already a selected tile, so move that character to here.
                 if(alreadyMoving)
                 {
-                    //Look for the character from the old point
-                    GameObject character = null;
-                    for(int i = 0; i < characters.Count; i ++)
+                    bool legalMove = false;
+                    //Make sure that the point they're trying to go to is within their range.
+                    for(int x = 0; x < coordSets.Count; x++)
                     {
-                        if(characters[i].GetComponent<CharacterRunner>().x == existingX && characters[i].GetComponent<CharacterRunner>().z == existingZ)
+                        for(int z = 0; z < coordSets[x].Count; z++)
                         {
-                            character = characters[i];
-                            break;
+                            if(coordSets[x][z].First == hitX && coordSets[x][z].Second == hitZ)
+                            {
+                                legalMove = true;
+                            }
                         }
                     }
-                    //We found the character that needs to be moved, so move it
-                    if(character != null)
+                    if(legalMove)
                     {
-                        StartCoroutine(ClearPaths());
-                        character.GetComponent<CharacterRunner>().x = hitX;
-                        character.GetComponent<CharacterRunner>().z = hitZ;
-                        StartCoroutine(PostUpdatedCharacters(character));
-                        character.GetComponent<CharacterRunner>().moving = false;
-                        cells[existingX, existingZ].GetComponent<TileRunner>().selected(false);
+                        //Look for the character from the old point
+                        GameObject character = null;
+                        for(int i = 0; i < characters.Count; i ++)
+                        {
+                            if(characters[i].GetComponent<CharacterRunner>().x == existingX && characters[i].GetComponent<CharacterRunner>().z == existingZ)
+                            {
+                                character = characters[i];
+                                break;
+                            }
+                        }
+                        //We found the character that needs to be moved, so move it
+                        if(character != null)
+                        {
+                            StartCoroutine(ClearPaths());
+                            character.GetComponent<CharacterRunner>().x = hitX;
+                            character.GetComponent<CharacterRunner>().z = hitZ;
+                            StartCoroutine(PostUpdatedCharacters(character));
+                            character.GetComponent<CharacterRunner>().moving = false;
+                            cells[existingX, existingZ].GetComponent<TileRunner>().selected(false);
+                        }
                     }
                 }
                 //A tile hasn't already been selected, select this one to move from
@@ -459,6 +463,11 @@ namespace GoogleARCore.HelloAR
             }
         }
 
+        bool WallCompare(int startX, int startZ, int endX, int endZ, int x1, int z1, int x2, int z2)
+        {
+            return((x1 == startX && z1 == startZ && x2 == endX && z2 == endZ) || (x1 == endX && z1 == endZ && x2 == startX && z2 == startZ));
+        }
+
         //Use #GRAPHTHEORY to determine all possible paths away from the point
         IEnumerator ShowPaths()
         {
@@ -466,6 +475,7 @@ namespace GoogleARCore.HelloAR
             //Debug.Log("Move count is " + (movingChar.GetComponent<CharacterRunner>().movement / 5));
             //Find all valid movement spaces
             Debug.Log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            //TODO: This is hardcoded currently, needs to change to character's movement / 5.
             while(steps < 4)
             {
                 Debug.Log("Step is " + steps);
@@ -477,23 +487,139 @@ namespace GoogleARCore.HelloAR
                 {
                     lastCoords = new List<Tuple<int, int>>();
                     lastCoords.Add(new Tuple<int, int>(fromX, fromZ));
+                    newCoords.Add(new Tuple<int, int>(fromX, fromZ));
                 }
                 else
                 {
                     lastCoords = coordSets[steps - 1];
                 }
 
+                bool flagLeft, flagRight, flagTop, flagBottom, flagTL, flagTR, flagBL, flagBR;
+
                 //For every last possible coord, look all around it for possible coords
                 for(int i = 0; i < lastCoords.Count; i ++)
                 {
-                    Debug.Log("Based on point " + lastCoords[i].First + ", " + lastCoords[i].Second);
-                    for(int x = lastCoords[i].First - 1; x < lastCoords[i].First + 2; x ++)
+                    int lastX = lastCoords[i].First;
+                    int lastZ = lastCoords[i].Second;
+                    flagLeft = false;
+                    flagRight = false;
+                    flagTop = false;
+                    flagBottom = false;
+                    flagTL = false;
+                    flagTR = false;
+                    flagBL = false;
+                    flagBR = false;
+
+                    //Check for the wall
+                    for(int k = 0; k < wallIds.Count; k++)
                     {
-                        for(int z = lastCoords[i].Second - 1; z < lastCoords[i].Second + 2; z ++)
+                        //Get the two sides of the wall
+                        int startX = (int)wallIds[k].GetComponent<WallRunner>().startX;
+                        int startZ = (int)wallIds[k].GetComponent<WallRunner>().startZ;
+                        int endX = (int)wallIds[k].GetComponent<WallRunner>().endX;
+                        int endZ = (int)wallIds[k].GetComponent<WallRunner>().endZ;
+
+                        if(WallCompare(startX, startZ, endX, endZ, lastX, lastZ, lastX, lastZ+1))
                         {
+                            flagTop = true;
+                        }
+                        if(WallCompare(startX, startZ, endX, endZ, lastX, lastZ, lastX, lastZ-1))
+                        {
+                            flagBottom = true;
+                        }
+                        if(WallCompare(startX, startZ, endX, endZ, lastX, lastZ, lastX+1, lastZ))
+                        {
+                            flagRight = true;
+                        }
+                        if(WallCompare(startX, startZ, endX, endZ, lastX, lastZ, lastX-1, lastZ))
+                        {
+                            flagLeft = true;
+                        }
+
+                        if(WallCompare(startX, startZ, endX, endZ, lastX-1, lastZ+1, lastX, lastZ+1) || WallCompare(startX, startZ, endX, endZ, lastX-1, lastZ+1, lastX-1, lastZ))
+                        {
+                            flagTL = true;
+                        }
+                        if(WallCompare(startX, startZ, endX, endZ, lastX-1, lastZ-1, lastX, lastZ-1) || WallCompare(startX, startZ, endX, endZ, lastX-1, lastZ-1, lastX-1, lastZ))
+                        {
+                            flagBL = true;
+                        }
+                        if(WallCompare(startX, startZ, endX, endZ, lastX+1, lastZ+1, lastX, lastZ+1) || WallCompare(startX, startZ, endX, endZ, lastX+1, lastZ+1, lastX+1, lastZ))
+                        {
+                            flagTR = true;
+                        }
+                        if(WallCompare(startX, startZ, endX, endZ, lastX+1, lastZ-1, lastX, lastZ-1) || WallCompare(startX, startZ, endX, endZ, lastX+1, lastZ-1, lastX+1, lastZ))
+                        {
+                            flagBR = true;
+                        }
+                    }
+
+                    Debug.Log("Based on point " + lastX + ", " + lastZ);
+                    for(int x = lastX - 1; x < lastX + 2; x ++)
+                    {
+                        for(int z = lastZ - 1; z < lastZ + 2; z ++)
+                        {
+                            if(flagTop)
+                            {
+                                if(z > lastZ)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagBottom)
+                            {
+                                if(z < lastZ)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagRight)
+                            {
+                                if(x > lastX)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagLeft)
+                            {
+                                if(x < lastX)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagBL)
+                            {
+                                if (x < lastX && z < lastZ)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagTL)
+                            {
+                                if (x < lastX && z > lastZ)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagBR)
+                            {
+                                if (x > lastX && z < lastZ)
+                                {
+                                    break;
+                                }
+                            }
+                            if(flagTR)
+                            {
+                                if (x > lastX && z > lastZ)
+                                {
+                                    break;
+                                }
+                            }
+
+
                             Debug.Log("Considering point " + x + ", " + z);
                             //Don't re-add the point we're checking from
-                            if(x == lastCoords[i].First && z == lastCoords[i].Second)
+                            if(x == lastX && z == lastZ)
                             {
                                 break;
                             }
@@ -515,22 +641,6 @@ namespace GoogleARCore.HelloAR
                                     }
                                 }
 
-                                //Make sure there isn't a wall inbetween the testPoint and the currentPoint
-                                for(int k = 0; k < wallIds.Count; k++)
-                                {
-                                    //Get the two sides of the wall
-                                    int startX = (int)wallIds[k].GetComponent<WallRunner>().startX;
-                                    int startZ = (int)wallIds[k].GetComponent<WallRunner>().startZ;
-                                    int endX = (int)wallIds[k].GetComponent<WallRunner>().endX;
-                                    int endZ = (int)wallIds[k].GetComponent<WallRunner>().endZ;
-
-                                    if((lastCoords[i].First == startX && lastCoords[i].Second == startZ && x == endX && z == endZ) || (lastCoords[i].First == endX && lastCoords[i].Second == endZ && x == startX && z == startZ))
-                                    {
-                                        flag = true;
-                                        break;
-                                    }
-                                }
-
                                 if(!flag)
                                 {
                                     Debug.Log("Adding point!");
@@ -544,7 +654,6 @@ namespace GoogleARCore.HelloAR
                 coordSets.Add(newCoords);
                 steps ++;
             }
-
 
             //Highlight all previously found movement spaces
             for(int i = 0; i < coordSets.Count; i ++)
