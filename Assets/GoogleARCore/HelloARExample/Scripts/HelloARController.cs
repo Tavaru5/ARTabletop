@@ -116,7 +116,14 @@ namespace GoogleARCore.HelloAR
                 Vector3 pos = cells[(int)x, (int)z].transform.position;
                 pos = pos + new Vector3 (0, 0.025f, 0);
                 GameObject char1;
-                char1 = Instantiate(characterPrefab, pos, Quaternion.Euler(0, 180f, 0));
+                if((int)data["characters"][i]["charModel"] == 0)
+                {
+                    char1 = Instantiate(characterPrefab, pos, Quaternion.Euler(0, 180f, 0));
+                }
+                else
+                {
+                    char1 = Instantiate(monsterPrefab, pos, Quaternion.Euler(0, 180f, 0));
+                }
 
                 //Set the variables for the character
                 char1.GetComponent<CharacterRunner>().characterId = data["characters"][i]["_id"];
